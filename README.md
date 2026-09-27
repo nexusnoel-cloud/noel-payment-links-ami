@@ -16,3 +16,7 @@
 - `LINK_ADMIN_PIN`
 
 `/make-link` も引き続き同じ生成画面として利用できます。
+
+
+## Fixed public payment URL
+Set `PAYMENT_BASE_URL=https://noel-payment-links-ami.vercel.app` in Vercel. Generated customer links will always use this public Production domain instead of protected Preview deployment URLs.

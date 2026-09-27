@@ -22,7 +22,7 @@ export async function POST(request){
       return Response.json({error:'金額は1,000〜2,000,000円の整数で入力してください。'}, {status:400});
     }
     const sig = sign(cleanName, cleanAmount);
-    const origin = new URL(request.url).origin;
+    const origin = (process.env.PAYMENT_BASE_URL || 'https://noel-payment-links-ami.vercel.app').replace(/\/$/, '');
     const url = `${origin}/pay?name=${encodeURIComponent(cleanName)}&amount=${cleanAmount}&sig=${sig}`;
     return Response.json({url});
   }catch(err){
