@@ -1,13 +1,18 @@
-# NOÉL Stripe Checkout — 298,000円固定版（名前・メール付き）
+# NOÉL Payment Links v7
 
-NOÉL 3 MONTH PROGRAM / 298,000円（税込）の固定決済ページです。
+トップページ自体が管理者向けの決済リンク生成画面です。
 
-- お名前入力
-- メールアドレス入力
-- Stripe Payment Element
-- Japan installments対応
-- Stripe receipt_email / metadata に顧客情報を保存
+## 使い方
 
-必要な環境変数:
-- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-- STRIPE_SECRET_KEY
+1. トップURLを開く
+2. 商品名・金額・管理PINを入力
+3. 生成された `/pay?...` の専用リンクを購入者へ送る
+4. 購入者は名前・メール・カード情報を入力し、利用可能な場合は分割払いを選択
+
+## Vercel Environment Variables
+
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_SECRET_KEY`
+- `LINK_ADMIN_PIN`
+
+`/make-link` も引き続き同じ生成画面として利用できます。
