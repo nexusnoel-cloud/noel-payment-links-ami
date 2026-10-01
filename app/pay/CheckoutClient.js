@@ -5,6 +5,9 @@ import {Elements, PaymentElement, useStripe, useElements} from '@stripe/react-st
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 const yen=n=>new Intl.NumberFormat('ja-JP').format(n)+'円';
+const bookingUrls={
+  '繰り返す悩みのパターン解析':'https://timerex.net/s/amibeautyjp/1ec4664c'
+};
 
 function Form({name,amount,sig}){
   const stripe=useStripe();
@@ -13,6 +16,7 @@ function Form({name,amount,sig}){
   const [email,setEmail]=useState('');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
+  const bookingUrl=bookingUrls[name];
 
   async function submit(e){
     e.preventDefault();
@@ -37,12 +41,16 @@ function Form({name,amount,sig}){
         elements,
         clientSecret:d.clientSecret,
         confirmParams:{
-          return_url:window.location.origin+'/pay/success',
+          return_url:window.location.origin+'/pay/success'+(bookingUrl?'?product='+encodeURIComponent(name):''),
           payment_method_data:{billing_details:{name:customerName.trim(),email:email.trim()}}
         },
         redirect:'if_required'
       });
       if(error){setMessage(error.message||'決済に失敗しました。');setBusy(false);return;}
+      if(bookingUrl){
+        window.location.assign(bookingUrl);
+        return;
+      }
       setMessage('お支払いが完了しました。');
     }catch{
       setMessage('通信エラーが発生しました。');
