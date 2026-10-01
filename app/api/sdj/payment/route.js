@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
-import {SDJ_AMOUNT, SDJ_PRODUCT, SDJ_NAME} from '../../../../lib/sdj';
+import {recoveryCookie,recoveryId} from '../../../../lib/sdj-recovery';
+import {SDJ_AMOUNT, SDJ_PRODUCT, SDJ_NAME, isPaidSDJ} from '../../../../lib/sdj';
 export async function POST(request) {
   try {
     const {customerName, email, requestId} = await request.json();
@@ -7,7 +8,9 @@ export async function POST(request) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const account = await stripe.accounts.retrieve();
     if (account.id !== 'acct_1HQOMtEJt4Fws7qP') return Response.json({error:'決済設定を確認中です。しばらくしてからお試しください。'}, {status:503});
+    const previousId=recoveryId(request);
+    if(previousId){const previous=await stripe.paymentIntents.retrieve(previousId);if(isPaidSDJ(previous))return Response.json({error:'お支払いは完了しています。受講案内へ移動します。',paid:true},{status:409,headers:{'Cache-Control':'no-store'}});}
     const pi = await stripe.paymentIntents.create({amount:SDJ_AMOUNT,currency:'jpy',payment_method_types:['card'],payment_method_options:{card:{installments:{enabled:true}}},description:SDJ_NAME,receipt_email:email.trim(),metadata:{product:SDJ_PRODUCT,productName:SDJ_NAME,customerName:customerName.trim()}}, {idempotencyKey:`sdj-${requestId}`});
-    return Response.json({clientSecret:pi.client_secret}, {headers:{'Cache-Control':'no-store'}});
+    return Response.json({clientSecret:pi.client_secret}, {headers:{'Cache-Control':'no-store','Set-Cookie':recoveryCookie(pi.id)}});
   } catch { return Response.json({error:'決済の準備ができませんでした。時間をおいて、もう一度お試しください。'}, {status:500}); }
 }
