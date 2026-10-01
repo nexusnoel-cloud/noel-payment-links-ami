@@ -1,0 +1,22 @@
+'use client';
+import {useState} from 'react';
+import {loadStripe} from '@stripe/stripe-js';
+import {Elements, PaymentElement, useStripe, useElements} from '@stripe/react-stripe-js';
+const stripePromise=loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+function Payment({clientSecret,name,email}){
+ const stripe=useStripe(),elements=useElements();const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ async function pay(e){e.preventDefault();if(!stripe||!elements||busy)return;setBusy(true);setError('');
+ try{const result=await stripe.confirmPayment({elements,confirmParams:{return_url:window.location.origin+'/sdj/success',payment_method_data:{billing_details:{name,email}}},redirect:'if_required'});
+ if(result.error){setError(result.error.message||'入力内容をご確認ください。');setBusy(false);return;}
+ window.location.assign('/sdj/success');
+ }catch{setError('通信状況をご確認のうえ、もう一度お試しください。');setBusy(false);}}
+ return <form onSubmit={pay}><h2>02 / お支払い方法</h2><PaymentElement options={{layout:'tabs'}}/><p className="small">対応するカードでは分割払いを選択できます。回数や手数料はカード会社・ご利用状況により異なります。</p><button disabled={!stripe||busy}>{busy?'お支払いを処理しています…':'39,800円（税込）を支払う'}</button><p role="alert" className="error">{error}</p><p className="small">決済はStripeで安全に処理されます。</p></form>;
+}
+export default function Checkout(){
+ const [name,setName]=useState(''),[email,setEmail]=useState(''),[secret,setSecret]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ async function prepare(e){e.preventDefault();if(busy)return;setBusy(true);setError('');try{
+ const key='sdj-order-'+email.trim();let requestId=sessionStorage.getItem(key);if(!requestId){requestId=crypto.randomUUID();sessionStorage.setItem(key,requestId);}
+ const r=await fetch('/api/sdj/payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerName:name.trim(),email:email.trim(),requestId})});const d=await r.json();if(!r.ok)throw new Error(d.error);sessionStorage.setItem('sdj-payment',d.clientSecret);setSecret(d.clientSecret);
+ }catch(e){setError(e.message||'通信に失敗しました。');}finally{setBusy(false);}}
+ return <main className="sdj"><a className="back" href="https://self-discovery-journey.amichandayo.chatgpt.site">← プログラムについて</a><header><span>NEXUS</span><p>SELF DISCOVERY JOURNEY</p><h1>自分を知る30日間を、<br/>ここから。</h1></header><section className="card"><p className="eyebrow">お申込み内容</p><h2>SELF DISCOVERY JOURNEY</h2><p>30日間で、自分の取扱説明書をつくる。</p><p className="price">39,800<span>円（税込）</span></p><p className="small">分割払いOK（対応カードのみ）</p><ul><li>レッスン動画・順序立てたワーク</li><li>自分のマニュアルノート作成シート</li><li>専用LINEでの質問サポート</li><li>30日を過ぎても受講できます</li></ul><p className="notice">購入後すぐに開始できます。<br/>決済完了後、MOSHの受講ページをご案内します。</p></section><section className="card">{!secret?<form onSubmit={prepare}><h2>01 / お客様情報</h2><label htmlFor="name">お名前</label><input id="name" value={name} onChange={e=>setName(e.target.value)} autoComplete="name" maxLength={120} required/><label htmlFor="email">メールアドレス</label><input id="email" type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" maxLength={254} required/><p className="small">受講時にも確認できるメールアドレスをご入力ください。</p><button disabled={busy}>{busy?'準備しています…':'お支払い方法へ進む'}</button><p className="small">このボタンでは、まだ決済されません。</p><p role="alert" className="error">{error}</p></form>:<><p className="small">{name} 様 ／ {email}</p><Elements stripe={stripePromise} options={{clientSecret:secret,locale:'ja',appearance:{theme:'stripe',variables:{colorPrimary:'#562a32',borderRadius:'8px',fontFamily:'sans-serif'}}}}><Payment clientSecret={secret} name={name.trim()} email={email.trim()}/></Elements></>}</section><footer>販売事業者：株式会社NEXUS</footer></main>;
+}
