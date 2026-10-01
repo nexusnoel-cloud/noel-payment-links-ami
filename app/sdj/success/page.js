@@ -4,7 +4,7 @@ import '../sdj.css';
 const help='https://mosh.jp/products/a1bacce0-f878-4e59-8268-dc01cad14198?openExternalBrowser=1';
 export default function Success(){
  const [state,setState]=useState({loading:true}),[retry,setRetry]=useState(0);
- useEffect(()=>{let live=true,timer;let secret;
+ useEffect(()=>{document.title='受講案内｜SELF DISCOVERY JOURNEY';let live=true,timer;let secret;
  try{secret=new URLSearchParams(location.search).get('payment_intent_client_secret')||sessionStorage.getItem('sdj-payment');if(secret)sessionStorage.setItem('sdj-payment',secret);}catch{}
  history.replaceState(null,'','/sdj/success');setState({loading:true});
  async function check(attempt=0){try{
