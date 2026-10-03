@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
 import crypto from 'crypto';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Keep the unrelated signed-link flow on its original API contract.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {apiVersion:'2025-10-29.clover'});
 
 function validSignature(name, amount, sig){
   const expected = crypto.createHmac('sha256', process.env.STRIPE_SECRET_KEY).update(`${name}|${amount}`).digest('hex');
@@ -54,3 +55,4 @@ export async function POST(request){
     return Response.json({error:err?.message || 'Stripe error'}, {status:500});
   }
 }
+
